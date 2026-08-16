@@ -1,18 +1,5 @@
 include_guard(GLOBAL)
 
-# ============================================================================
-# Options
-# ============================================================================
-
-option(CPPDEPENDENCIES_USE_SYSTEM_PACKAGES
-    "Prefer system packages over FetchContent"
-    OFF
-)
-
-# ============================================================================
-# Dependencies
-# ============================================================================
-
 include("${CMAKE_CURRENT_LIST_DIR}/cli11/cli11.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/freetype/freetype.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/glad/glad.cmake")

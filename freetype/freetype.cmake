@@ -19,13 +19,15 @@ function(cppdependencies_freetype OUT_TARGET)
         return()
     endif()
 
-    if(CPPDEPENDENCIES_USE_SYSTEM_PACKAGES)
-        find_package(Freetype QUIET)
+    if(TARGET Freetype::Freetype)
+        return()
+    endif()
 
-        if(TARGET Freetype::Freetype)
-            set(${OUT_TARGET} Freetype::Freetype PARENT_SCOPE)
-            return()
-        endif()
+    find_package(Freetype QUIET)
+
+    if(TARGET Freetype::Freetype)
+        set(${OUT_TARGET} Freetype::Freetype PARENT_SCOPE)
+        return()
     endif()
 
     if(TARGET freetype)
