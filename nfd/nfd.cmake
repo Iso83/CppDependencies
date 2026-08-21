@@ -13,7 +13,7 @@ function(cppdependencies_nfd OUT_TARGET)
     # =========================================================
 
     if(TARGET nfd::nfd)
-        set(${OUT_TARGET} glm::glm PARENT_SCOPE)
+        set(${OUT_TARGET} nfd::nfd PARENT_SCOPE)
         return()
     endif()
 
