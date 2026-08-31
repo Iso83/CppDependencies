@@ -18,10 +18,16 @@ function(cppdependencies_json_nlohmann OUT_TARGET)
     endif()
    
 
-    FetchContent_Declare(
+    #[[FetchContent_Declare(
         json_nlohmann
         GIT_REPOSITORY https://github.com/nlohmann/json.git
         GIT_TAG v3.11.3
+    )]]
+
+    FetchContent_Declare(
+        json_nlohmann
+        URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz
+        URL_HASH SHA256=42f6e95cad6ec532fd372391373363b62a14af6d771056dbfc86160e6dfff7aa
     )
 
     cppcmake_dependency_make_available(json_nlohmann)
