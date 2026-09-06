@@ -3,6 +3,8 @@ include_guard(GLOBAL)
 include(FetchContent)
 include("${CMAKE_CURRENT_LIST_DIR}/../glfw/glfw.cmake")
 
+set(CPPDEPENDENCIES_IMGUI_DOCKING_VERSION "1.92.9b")
+
 function(_cppdependencies_imgui_docking_create)
     add_library(imgui_docking STATIC
         "${imgui_docking_SOURCE_DIR}/imgui.cpp"
@@ -49,15 +51,19 @@ function(cppdependencies_imgui_docking OUT_TARGET)
         return()
     endif()
 
-    FetchContent_Declare(
-        imgui_docking
-        GIT_REPOSITORY https://github.com/ocornut/imgui.git
-        GIT_TAG 60d7fb207eeb46d6363dd4bde10b35991bae0ce7 # ImGui docking (pinned) 2026-03
-    )
+    find_package(imgui_docking CONFIG QUIET)
 
-    cppcmake_dependency_make_available(imgui_docking)
+    if(NOT TARGET imgui_docking::imgui_docking)
+        FetchContent_Declare(
+            imgui_docking
+            URL https://github.com/ocornut/imgui/archive/refs/tags/v${CPPDEPENDENCIES_IMGUI_DOCKING_VERSION}-docking.tar.gz
+            URL_HASH SHA256=90ded916bd57db2e0e171b6b098940a47c6f5042725dcdc67fb19940ca8bfdcc
+        )
+        
+        cppcmake_dependency_make_available(imgui_docking)
 
-    _cppdependencies_imgui_docking_create()
+        _cppdependencies_imgui_docking_create()
+    endif()
 
     set(${OUT_TARGET} imgui_docking::imgui_docking PARENT_SCOPE)
 endfunction()
