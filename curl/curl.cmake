@@ -18,12 +18,9 @@ function(cppdependencies_curl OUT_TARGET)
     endif()
 
     set(BUILD_CURL_EXE OFF CACHE BOOL "" FORCE)
-    set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-    set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
     set(CURL_DISABLE_INSTALL ON CACHE BOOL "" FORCE)
 
     set(BUILD_LIBCURL_DOCS OFF CACHE BOOL "" FORCE)
-    set(BUILD_MISC_DOCS OFF CACHE BOOL "" FORCE)
     set(ENABLE_CURL_MANUAL OFF CACHE BOOL "" FORCE)
 
     set(CURL_ZLIB OFF CACHE STRING "" FORCE)
@@ -50,7 +47,46 @@ function(cppdependencies_curl OUT_TARGET)
         URL_HASH SHA256=aa1b66a70eace83dc624508745646c08ae561de512ab403adffb93ac87fc72e6
     )
 
+    # curl uses these generic cache variables. Preserve the caller's values
+    # so fetching curl does not change the configuration of other projects.
+    foreach(_option IN ITEMS
+        BUILD_EXAMPLES
+        BUILD_TESTING
+        BUILD_MISC_DOCS
+    )
+        
+        if(DEFINED CACHE{${_option}})
+            set(_curl_saved_${_option}_defined TRUE)
+            
+            get_property(_curl_saved_${_option}
+                CACHE ${_option}
+                    PROPERTY VALUE
+            )
+        else()
+            set(_curl_saved_${_option}_defined FALSE)
+        endif()
+
+        set(${_option} OFF CACHE BOOL "" FORCE)
+    endforeach()
+
     cppcmake_dependency_make_available(curl)
+
+    foreach(_option IN ITEMS
+        BUILD_EXAMPLES
+        BUILD_TESTING
+        BUILD_MISC_DOCS
+    )
+        if(_curl_saved_${_option}_defined)
+            set(
+                ${_option}
+                "${_curl_saved_${_option}}"
+                CACHE BOOL ""
+                FORCE
+            )
+        else()
+            unset(${_option} CACHE)
+        endif()
+    endforeach()
 
     cppcmake_dependency_set_folder(libcurl_object "curl")
     cppcmake_dependency_set_folder(libcurl_static "curl")
