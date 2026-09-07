@@ -14,6 +14,16 @@ function(_cppdependencies_implot_create IMGUI_TARGET)
 
     add_library(implot::implot ALIAS implot)
 
+    target_include_directories(implot 
+        PUBLIC
+            "${implot_SOURCE_DIR}"
+    )
+
+    target_compile_features(implot
+        PUBLIC
+            c_std_99
+    )
+
     target_link_libraries(implot
         PUBLIC
             ${IMGUI_TARGET}

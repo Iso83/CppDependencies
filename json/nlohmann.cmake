@@ -16,13 +16,6 @@ function(cppdependencies_json_nlohmann OUT_TARGET)
         set(${OUT_TARGET} nlohmann_json::nlohmann_json PARENT_SCOPE)
         return()
     endif()
-   
-
-    #[[FetchContent_Declare(
-        json_nlohmann
-        GIT_REPOSITORY https://github.com/nlohmann/json.git
-        GIT_TAG v3.11.3
-    )]]
 
     FetchContent_Declare(
         json_nlohmann
