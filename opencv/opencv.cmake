@@ -12,15 +12,74 @@ function(cppdependencies_opencv OUT_TARGETS)
     #
     # Parameters:
     #   [out] OUT_TARGETS - Receives the OpenCV target list.
-    #   [in]  ARGN        - Optional OpenCV components.
+    #
+    # Options:
+    #   STATIC - Use static OpenCV libraries.
+    #   SHARED - Use shared OpenCV libraries.
+    #
+    # Multi-value arguments:
+    #   COMPONENTS - Optional OpenCV components.
+    #
+    # For compatibility, components may also be passed without the
+    # COMPONENTS keyword.
     # =========================================================
 
-    if(ARGN)
+    cmake_parse_arguments(ARG "STATIC;SHARED" "" "COMPONENTS" ${ARGN})
+
+    if(ARG_STATIC AND ARG_SHARED)
+        message(FATAL_ERROR
+            "cppdependencies_opencv: choose either STATIC or SHARED"
+        )
+    elseif(NOT ARG_STATIC AND NOT ARG_SHARED)
+        message(FATAL_ERROR
+            "cppdependencies_opencv: STATIC or SHARED is required"
+        )
+    endif()
+
+    set(_components
+        ${ARG_COMPONENTS}
+        ${ARG_UNPARSED_ARGUMENTS}
+    )
+
+    if(_components)
+        set(_existing_targets)
+        set(_all_targets_available TRUE)
+
+        foreach(_component IN LISTS _components)
+            set(_target "opencv_${_component}")
+
+            if(TARGET ${_target})
+                list(APPEND _existing_targets ${_target})
+            else()
+                set(_all_targets_available FALSE)
+            endif()
+        endforeach()
+
+        if(_all_targets_available)
+            set(${OUT_TARGETS} "${_existing_targets}" PARENT_SCOPE)
+            return()
+        endif()
+    elseif(OpenCV_FOUND AND OpenCV_LIBS)
+        set(${OUT_TARGETS} "${OpenCV_LIBS}" PARENT_SCOPE)
+        return()
+    endif()
+
+    if(ARG_STATIC)
+        set(_linkage STATIC)
+    else()
+        set(_linkage SHARED)
+    endif()
+
+    if(COMMAND cppdependencies_package_opencv)
+        cppdependencies_package_opencv(${_linkage})
+    endif()
+
+    if(_components)
         find_package(
             OpenCV ${CPPDEPENDENCIES_OPENCV_VERSION}
             CONFIG
             QUIET
-            COMPONENTS ${ARGN}
+            COMPONENTS ${_components}
         )
     else()
         find_package(
@@ -61,7 +120,11 @@ function(cppdependencies_opencv OUT_TARGETS)
             endif()
         endforeach()
 
-        set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
+        if(ARG_STATIC)
+            set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+        else()
+            set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
+        endif()
         set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
         set(BUILD_PERF_TESTS OFF CACHE BOOL "" FORCE)
         set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -98,10 +161,10 @@ function(cppdependencies_opencv OUT_TARGETS)
             endif()
         endforeach()
 
-        if(ARGN)
+        if(_components)
             set(_opencv_targets)
 
-            foreach(_component IN LISTS ARGN)
+            foreach(_component IN LISTS _components)
                 set(_target "opencv_${_component}")
 
                 if(NOT TARGET ${_target})

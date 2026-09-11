@@ -8,14 +8,42 @@ function(cppdependencies_curl OUT_TARGET)
     # =========================================================
     # Summary
     #
-    # Provides the curl dependency target.
+    # Provides the requested static or shared curl dependency target.
     #
     # Parameters:
-    #   [out] OUT_TARGET - Receives the curl target name.
+    #   [out] OUT_TARGET - Receives the selected curl target name.
+    #
+    # Options:
+    #   STATIC - Link curl statically into the consuming target.
+    #   SHARED - Link against the curl shared library/DLL.
     # =========================================================
 
-    if(TARGET CURL::libcurl)
-        set(${OUT_TARGET} CURL::libcurl PARENT_SCOPE)
+    cmake_parse_arguments(PARSE_ARGV 1 ARG "STATIC;SHARED" "" "")
+
+    if(ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR
+            "cppdependencies_curl: unsupported arguments: ${ARG_UNPARSED_ARGUMENTS}"
+        )
+    endif()
+
+    if(ARG_STATIC AND ARG_SHARED)
+        message(FATAL_ERROR
+            "cppdependencies_curl: choose either STATIC or SHARED"
+        )
+    elseif(NOT ARG_STATIC AND NOT ARG_SHARED)
+        message(FATAL_ERROR
+            "cppdependencies_curl: STATIC or SHARED is required"
+        )
+    endif()
+
+    if(ARG_STATIC)
+        set(_curl_target CURL::libcurl_static)
+    else()
+        set(_curl_target CURL::libcurl_shared)
+    endif()
+
+    if(TARGET ${_curl_target})
+        set(${OUT_TARGET} ${_curl_target} PARENT_SCOPE)
         return()
     endif()
 
@@ -25,7 +53,31 @@ function(cppdependencies_curl OUT_TARGET)
         QUIET
     )
 
-    if(NOT TARGET CURL::libcurl)
+    if(TARGET ${_curl_target})
+        set(${OUT_TARGET} ${_curl_target} PARENT_SCOPE)
+        return()
+    endif()
+
+    if(TARGET CURL::libcurl)
+        message(FATAL_ERROR
+            "cppdependencies_curl: the installed CURL package does not "
+            "provide the requested target '${_curl_target}'"
+        )
+    endif()
+
+    if(NOT TARGET ${_curl_target})
+        # Keep curl's linkage selection local to this function. In particular,
+        # do not let curl create or overwrite BUILD_SHARED_LIBS in the parent
+        # project cache: add_library() in the consuming project must retain its
+        # own default or explicitly selected linkage.
+        if(ARG_STATIC)
+            set(BUILD_SHARED_LIBS OFF)
+            set(BUILD_STATIC_LIBS ON)
+        else()
+            set(BUILD_SHARED_LIBS ON)
+            set(BUILD_STATIC_LIBS OFF)
+        endif()
+
         set(BUILD_CURL_EXE OFF CACHE BOOL "" FORCE)
         set(CURL_DISABLE_INSTALL ON CACHE BOOL "" FORCE)
 
@@ -95,7 +147,15 @@ function(cppdependencies_curl OUT_TARGET)
 
         cppcmake_dependency_set_folder(libcurl_object "curl")
         cppcmake_dependency_set_folder(libcurl_static "curl")
+        cppcmake_dependency_set_folder(libcurl_shared "curl")
     endif()
 
-    set(${OUT_TARGET} CURL::libcurl PARENT_SCOPE)
+    if(NOT TARGET ${_curl_target})
+        message(FATAL_ERROR
+            "cppdependencies_curl: curl did not create the requested "
+            "target '${_curl_target}'"
+        )
+    endif()
+
+    set(${OUT_TARGET} ${_curl_target} PARENT_SCOPE)
 endfunction()

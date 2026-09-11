@@ -17,6 +17,13 @@ function(cppdependencies_glm OUT_TARGET)
         return()
     endif()
 
+    find_package(glm CONFIG QUIET)
+
+    if(TARGET glm::glm)
+        set(${OUT_TARGET} glm::glm PARENT_SCOPE)
+        return()
+    endif()
+
     FetchContent_Declare(
         glm
         GIT_REPOSITORY https://github.com/g-truc/glm.git
@@ -24,7 +31,7 @@ function(cppdependencies_glm OUT_TARGET)
     )
 
     cppcmake_dependency_make_available(glm)
-    
+
     cppcmake_dependency_set_folder(glm "")
 
     set(${OUT_TARGET} glm::glm PARENT_SCOPE)

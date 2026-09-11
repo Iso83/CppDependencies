@@ -5,7 +5,7 @@ include(FetchContent)
 function(_cppdependencies_implot_create IMGUI_TARGET)
     add_library(implot STATIC
         "${implot_SOURCE_DIR}/implot_internal.h"
-        
+
         "${implot_SOURCE_DIR}/implot.h"
         "${implot_SOURCE_DIR}/implot.cpp"
 
@@ -14,7 +14,7 @@ function(_cppdependencies_implot_create IMGUI_TARGET)
 
     add_library(implot::implot ALIAS implot)
 
-    target_include_directories(implot 
+    target_include_directories(implot
         PUBLIC
             "${implot_SOURCE_DIR}"
     )
@@ -51,6 +51,13 @@ function(cppdependencies_implot OUT_TARGET IMGUI_TARGET)
             "cppdependencies_implot: '${IMGUI_TARGET}' is not a valid ImGui target"
         )
     endif()
+
+    if(TARGET implot::implot)
+        set(${OUT_TARGET} implot::implot PARENT_SCOPE)
+        return()
+    endif()
+
+    find_package(implot CONFIG QUIET)
 
     if(TARGET implot::implot)
         set(${OUT_TARGET} implot::implot PARENT_SCOPE)

@@ -2,6 +2,8 @@ include_guard(GLOBAL)
 
 include(FetchContent)
 
+set(CPPDEPENDENCIES_TALIB_VERSION "0.7.1")
+
 function(cppdependencies_talib OUT_TARGET)
     # =========================================================
     # Summary
@@ -29,12 +31,16 @@ function(cppdependencies_talib OUT_TARGET)
         return()
     endif()
 
-    find_package(TA-Lib CONFIG QUIET)
+    find_package(
+        TA-Lib ${CPPDEPENDENCIES_TALIB_VERSION}
+        CONFIG
+        QUIET
+    )
 
     if(NOT TARGET ${_target})
         FetchContent_Declare(
             talib
-            URL "https://github.com/TA-Lib/ta-lib/archive/refs/tags/v0.7.1.tar.gz"
+            URL "https://github.com/TA-Lib/ta-lib/archive/refs/tags/v${CPPDEPENDENCIES_TALIB_VERSION}.tar.gz"
             URL_HASH SHA256=40e7a6978052fe5245771e430e6a4c4553b40038f8ac5a985a1540c4c1fa6ace
         )
 
@@ -63,39 +69,4 @@ function(cppdependencies_talib OUT_TARGET)
     endif()
 
     set(${OUT_TARGET} ${_target} PARENT_SCOPE)
-endfunction()
-
-function(cppdependencies_talib_copy_runtime TARGET)
-    # =========================================================
-    # Summary
-    #
-    # Copies the TA-Lib shared library next to the target.
-    #
-    # Parameters:
-    #   TARGET - Target that requires the TA-Lib runtime.
-    # =========================================================
-
-    if(NOT TARGET ${TARGET})
-        message(FATAL_ERROR
-            "cppdependencies_talib_copy_runtime: "
-            "target '${TARGET}' does not exist."
-        )
-    endif()
-
-    if(NOT TARGET TA-Lib)
-        message(FATAL_ERROR
-            "cppdependencies_talib_copy_runtime: "
-            "TA-Lib shared target is not available."
-        )
-    endif()
-
-    add_custom_command(
-        TARGET ${TARGET}
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "$<TARGET_FILE:TA-Lib>"
-            "$<TARGET_FILE_DIR:${TARGET}>"
-        COMMENT "Copying TA-Lib runtime for ${TARGET}"
-        VERBATIM
-    )
 endfunction()

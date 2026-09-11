@@ -20,6 +20,7 @@ function(cppdependencies_freetype OUT_TARGET)
     endif()
 
     if(TARGET Freetype::Freetype)
+        set(${OUT_TARGET} Freetype::Freetype PARENT_SCOPE)
         return()
     endif()
 
@@ -34,7 +35,7 @@ function(cppdependencies_freetype OUT_TARGET)
         set(${OUT_TARGET} freetype PARENT_SCOPE)
         return()
     endif()
-    
+
     FetchContent_Declare(
         freetype
         GIT_REPOSITORY https://gitlab.freedesktop.org/freetype/freetype.git
