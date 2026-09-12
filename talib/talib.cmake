@@ -8,17 +8,30 @@ function(cppdependencies_talib OUT_TARGET)
     # =========================================================
     # Summary
     #
-    # Provides the TA-Lib dependency target.
+    # Provides the requested static or shared TA-Lib dependency target.
     #
     # Parameters:
-    #   [out] OUT_TARGET - Receives the TA-Lib target name.
+    #   [out] OUT_TARGET - Receives the selected TA-Lib target name.
     #
     # Options:
-    #   STATIC - Use the static TA-Lib library.
-    #            Default is the shared library.
+    #   STATIC - Link TA-Lib statically into the consuming target.
+    #   SHARED - Link against the TA-Lib shared library/DLL.
+    #            This is the default when neither option is specified.
     # =========================================================
 
-    cmake_parse_arguments(ARG "STATIC" "" "" ${ARGN})
+    cmake_parse_arguments(PARSE_ARGV 1 ARG "STATIC;SHARED" "" "")
+
+    if(ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR
+            "cppdependencies_talib: unsupported arguments: ${ARG_UNPARSED_ARGUMENTS}"
+        )
+    endif()
+
+    if(ARG_STATIC AND ARG_SHARED)
+        message(FATAL_ERROR
+            "cppdependencies_talib: choose either STATIC or SHARED"
+        )
+    endif()
 
     if(ARG_STATIC)
         set(_target TA-Lib-Static)

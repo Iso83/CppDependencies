@@ -16,6 +16,7 @@ function(cppdependencies_curl OUT_TARGET)
     # Options:
     #   STATIC - Link curl statically into the consuming target.
     #   SHARED - Link against the curl shared library/DLL.
+    #            This is the default when neither option is specified.
     # =========================================================
 
     cmake_parse_arguments(PARSE_ARGV 1 ARG "STATIC;SHARED" "" "")
@@ -29,10 +30,6 @@ function(cppdependencies_curl OUT_TARGET)
     if(ARG_STATIC AND ARG_SHARED)
         message(FATAL_ERROR
             "cppdependencies_curl: choose either STATIC or SHARED"
-        )
-    elseif(NOT ARG_STATIC AND NOT ARG_SHARED)
-        message(FATAL_ERROR
-            "cppdependencies_curl: STATIC or SHARED is required"
         )
     endif()
 
