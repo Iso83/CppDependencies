@@ -4,6 +4,10 @@ include(FetchContent)
 include("${CMAKE_CURRENT_LIST_DIR}/../jpeg/jpeg.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/../zlib/zlib.cmake")
 
+option(CPPDEPENDENCIES_PDFIUM_USE_BINARIES
+    "Use pinned prebuilt PDFium instead of the package/source route" OFF
+)
+
 set(CPPDEPENDENCIES_PDFIUM_VERSION "2026.10.11")
 set(CPPDEPENDENCIES_PDFIUM_REVISION "59ea54cce0179db3269c4c58874249597ca3b118")
 
@@ -19,6 +23,11 @@ function(cppdependencies_pdfium OUT_TARGET)
     # Options:
     #   STATIC - Link the static library.
     #   SHARED - Link the shared library (default).
+    #
+    # Configuration:
+    #   CPPDEPENDENCIES_PDFIUM_USE_BINARIES - OFF by default. ON bypasses
+    #   package/source resolution for pinned Windows/Linux x64 binaries.
+    #   Binary mode supports SHARED only; use a separate builddirectory.
     #
     # Source profile:
     #   AGG rendering, FreeType, ICU, JPEG, JPX, JBIG2 and Deflate.
@@ -48,6 +57,74 @@ function(cppdependencies_pdfium OUT_TARGET)
         set(_package_target PDFium::pdfium_shared)
     endif()
 
+    if(CPPDEPENDENCIES_PDFIUM_USE_BINARIES)
+        # This opt-in route bypasses NAS/package probing and the source build.
+        # The pinned distribution only supplies a shared library.
+        if(ARG_STATIC)
+            message(FATAL_ERROR
+                "PDFium: CPPDEPENDENCIES_PDFIUM_USE_BINARIES requires SHARED"
+            )
+        endif()
+        if(TARGET pdfium)
+            get_target_property(_binary_target pdfium CPPDEPENDENCIES_PREBUILT)
+            if(NOT _binary_target)
+                message(FATAL_ERROR 
+                    "PDFium: a different pdfium target already exists; select the binary route before resolving PDFium"
+                )
+            endif()
+
+            set(${OUT_TARGET} pdfium PARENT_SCOPE)
+            return()
+        endif()
+        
+        if(WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8 AND
+           NOT CMAKE_GENERATOR_PLATFORM MATCHES "[Aa][Rr][Mm]" AND
+           NOT CMAKE_SYSTEM_PROCESSOR MATCHES "[Aa][Rr][Mm]|aarch64")
+            set(_artifact pdfium-win-x64.tgz)
+            set(_sha256 808d36da9bc5a3104315fb307c80998121f565ee53953633bf33e80d7429e5ac)
+        elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64")
+            set(_artifact pdfium-linux-x64.tgz)
+            set(_sha256 d9d67bc40af03aef4fe28a60b19b1086f28ace019c8c9caf19cb7fe3d14ceca3)
+        else()
+            message(FATAL_ERROR 
+                "PDFium: no pinned binary for ${CMAKE_SYSTEM_NAME}/${CMAKE_SYSTEM_PROCESSOR}"
+            )
+        endif()
+
+        FetchContent_Declare(pdfium_binary
+            URL "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F8076/${_artifact}"
+            URL_HASH "SHA256=${_sha256}"
+            DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        )
+        FetchContent_MakeAvailable(pdfium_binary)
+
+        set(PDFium_DIR "${pdfium_binary_SOURCE_DIR}")
+        find_package(PDFium CONFIG REQUIRED
+            PATHS "${pdfium_binary_SOURCE_DIR}" NO_DEFAULT_PATH
+            NO_CMAKE_FIND_ROOT_PATH
+        )
+        if(NOT TARGET pdfium)
+            message(FATAL_ERROR 
+                "PDFium: binary package did not provide target 'pdfium'"
+            )
+        endif()
+
+        # CppCMake DLL deployment requires the package to publish shared linkage.
+        get_target_property(_type pdfium TYPE)
+        if(NOT _type STREQUAL "SHARED_LIBRARY")
+            message(FATAL_ERROR 
+                "PDFium: binary package must expose a shared imported target"
+            )
+        endif()
+        set_property(TARGET pdfium PROPERTY CPPDEPENDENCIES_PREBUILT TRUE)
+        
+        message(STATUS 
+            "CppDependencies PDFium: pinned binary (chromium/8076)"
+        )
+        set(${OUT_TARGET} pdfium PARENT_SCOPE)
+        return()
+    endif()
+
     if(TARGET pdfium)
         get_target_property(_type pdfium TYPE)
         if(NOT _type STREQUAL "${_linkage}_LIBRARY")
@@ -55,6 +132,7 @@ function(cppdependencies_pdfium OUT_TARGET)
                 "cppdependencies_pdfium: source target already uses another linkage"
             )
         endif()
+        
         set(${OUT_TARGET} pdfium PARENT_SCOPE)
         return()
     endif()
