@@ -48,6 +48,7 @@ set_property(
 # Dependencies
 # ============================================================================
 
+include("${CMAKE_CURRENT_LIST_DIR}/bergamot/bergamot.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/cli11/cli11.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/clipper2/clipper2.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/cpputility/cpputility.cmake")
