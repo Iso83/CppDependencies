@@ -19,8 +19,8 @@ function(cppdependencies_clipper2 OUT_TARGET)
 
     FetchContent_Declare(
         Clipper2
-        GIT_REPOSITORY https://github.com/AngusJohnson/Clipper2.git
-        GIT_TAG f9c5eb6e14a59f6f5d65fbfb3564519a561cf4fd
+        GIT_REPOSITORY https://github.com/PolyClipping/Clipper2.git
+        GIT_TAG b496b454df168a2280354857c1cd90bd6fa7b4dd
         GIT_SHALLOW TRUE
         SOURCE_SUBDIR CPP
     )
